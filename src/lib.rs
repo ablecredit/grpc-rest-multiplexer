@@ -154,7 +154,7 @@ fn allow_headers() -> [HeaderName; 17] {
 }
 
 
-pub fn xai_layer() -> Stack<CorsLayer, Identity> {
+pub fn xai_rest_layer() -> Stack<CorsLayer, Identity> {
     tower::ServiceBuilder::new()
         .layer(
             CorsLayer::new()
@@ -167,4 +167,15 @@ pub fn xai_layer() -> Stack<CorsLayer, Identity> {
                 .allow_methods([Method::POST, Method::GET, Method::OPTIONS]),
         )
         .into_inner()
+}
+
+pub fn xai_grpc_layer() -> CorsLayer {
+    CorsLayer::new()
+        .allow_headers(allow_headers())
+        .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
+            origin.is_empty()
+                || origin.as_bytes().ends_with(b"xambit.io")
+                || origin.as_bytes().starts_with(b"http://localhost")
+        }))
+        .allow_methods([Method::POST])
 }
