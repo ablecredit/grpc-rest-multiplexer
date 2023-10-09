@@ -1,3 +1,5 @@
+#![feature(unboxed_closures)]
+
 use axum::{
     http::{header::CONTENT_TYPE, Request},
     response::{IntoResponse, Response},
@@ -5,6 +7,7 @@ use axum::{
 use futures::{future::BoxFuture, ready};
 use http::{HeaderValue, request::Parts, HeaderName, header::{ACCEPT, HOST}};
 use hyper::Method;
+use tonic::{service::interceptor::InterceptorLayer, Status};
 use tower_http::cors::{CorsLayer, AllowOrigin};
 use std::{
     convert::Infallible,
@@ -169,13 +172,20 @@ pub fn xai_rest_layer() -> Stack<CorsLayer, Identity> {
         .into_inner()
 }
 
-pub fn xai_grpc_layer() -> CorsLayer {
-    CorsLayer::new()
-        .allow_headers(allow_headers())
-        .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
-            origin.is_empty()
-                || origin.as_bytes().ends_with(b"xambit.io")
-                || origin.as_bytes().starts_with(b"http://localhost")
-        }))
-        .allow_methods([Method::POST])
+pub fn xai_grpc_layer<F>(extractor: F) -> Stack<InterceptorLayer<F>,Stack<CorsLayer, Identity>>
+    where F: FnMut(tonic::Request<()>,) -> anyhow::Result<tonic::Request<()>, Status>
+{
+    tower::ServiceBuilder::new()
+        .layer(
+            CorsLayer::new()
+                .allow_headers(allow_headers())
+                .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
+                    origin.is_empty()
+                        || origin.as_bytes().ends_with(b"xambit.io")
+                        || origin.as_bytes().starts_with(b"http://localhost")
+                }))
+                .allow_methods([Method::POST]),
+        )
+        .layer(tonic::service::interceptor(extractor))
+        .into_inner()
 }
