@@ -6,3 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum       = { version= "0", default-features = false, features = ["http1", "tokio", "macros"]}
+futures    = "0"
+http       = "0"
+http-body  = "0"
+hyper      = "0"
+hyper-tls  = "0"
+log        = "0"
+tonic      = { version= "0", default-features= false, features= ["codegen","tls","tls-roots","prost"] }
+tonic-web  = { version= "0" }
+tower      = "0"
+tower-http = "0"
