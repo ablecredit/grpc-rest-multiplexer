@@ -1,19 +1,26 @@
 #![feature(unboxed_closures)]
 
 use axum::{
-    http::{header::CONTENT_TYPE, Request},
+    http::Request,
     response::{IntoResponse, Response},
 };
 use futures::{future::BoxFuture, ready};
-use http::{HeaderValue, HeaderName, header::{ACCEPT, HOST}, request::Parts};
-use hyper::Method;
-use tonic::{service::interceptor::InterceptorLayer, Status};
-use tower_http::cors::{CorsLayer, AllowOrigin};
+use http::{
+    header::{HeaderName, ACCEPT, CONTENT_TYPE, HOST},
+    request::Parts,
+    HeaderValue, Method,
+};
+
 use std::{
     convert::Infallible,
     task::{Context, Poll},
 };
-use tower::{Service, layer::util::{Stack, Identity}};
+use tonic::{service::interceptor::InterceptorLayer, Status};
+use tower::{
+    layer::util::{Identity, Stack},
+    Service,
+};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 #[macro_use]
 extern crate log;
@@ -120,8 +127,7 @@ where
 }
 
 fn cors_layer_allow_header() -> CorsLayer {
-    CorsLayer::new()
-    .allow_headers([
+    CorsLayer::new().allow_headers([
         ACCEPT,
         HOST,
         CONTENT_TYPE,
@@ -144,7 +150,7 @@ fn cors_layer_allow_header() -> CorsLayer {
 
 fn is_grpc_request<B>(req: &Request<B>) -> bool {
     req.headers()
-        .get(CONTENT_TYPE)
+        .get("content-type")
         .map(|content_type| {
             info!(
                 "{}",
@@ -165,13 +171,20 @@ pub fn xai_rest_layer() -> Stack<CorsLayer, Identity> {
                         || origin.as_bytes().ends_with(b"xambit.io")
                         || origin.as_bytes().starts_with(b"http://localhost")
                 }))
-                .allow_methods([Method::POST, Method::GET, Method::OPTIONS]),
+                .allow_methods([
+                    Method::POST,
+                    Method::PUT,
+                    Method::DELETE,
+                    Method::GET,
+                    Method::OPTIONS,
+                ]),
         )
         .into_inner()
 }
 
-pub fn xai_grpc_layer<F>(extractor: F) -> Stack<InterceptorLayer<F>,Stack<CorsLayer, Identity>>
-    where F: FnMut(tonic::Request<()>,) -> anyhow::Result<tonic::Request<()>, Status>
+pub fn xai_grpc_layer<F>(extractor: F) -> Stack<InterceptorLayer<F>, Stack<CorsLayer, Identity>>
+where
+    F: FnMut(tonic::Request<()>) -> anyhow::Result<tonic::Request<()>, Status>,
 {
     tower::ServiceBuilder::new()
         .layer(
