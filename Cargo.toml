@@ -9,11 +9,11 @@ edition = "2021"
 anyhow     = "1"
 axum       = { version= "0", default-features = false, features = ["http1", "tokio", "macros"]}
 futures    = "0"
-http       = "1"
+http       = "0"
 http-body  = "0"
 hyper      = "0"
 log        = "0"
 tonic      = { version= "0", default-features= false, features= ["codegen","tls","tls-roots","prost"] }
 tonic-web  = { version= "0" }
-tower      = "0"
-tower-http = { version = "0", features=["cors"]}
+tower      = "0.4"
+tower-http = { version = "0.4" }
