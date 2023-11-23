@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use futures::{future::BoxFuture, ready};
-use http::{HeaderValue, request::Parts, HeaderName, header::{ACCEPT, HOST}};
+use http::{HeaderValue, HeaderName, header::{ACCEPT, HOST}, request::Parts};
 use hyper::Method;
 use tonic::{service::interceptor::InterceptorLayer, Status};
 use tower_http::cors::{CorsLayer, AllowOrigin};
@@ -119,23 +119,9 @@ where
     }
 }
 
-fn is_grpc_request<B>(req: &Request<B>) -> bool {
-    req.headers()
-        .get(CONTENT_TYPE)
-        .map(|content_type| {
-            info!(
-                "{}",
-                String::from_utf8(content_type.as_bytes().to_vec()).unwrap()
-            );
-            content_type.as_bytes()
-        })
-        .filter(|content_type| content_type.starts_with(b"application/grpc"))
-        .is_some()
-}
-
-#[inline]
-fn allow_headers() -> [HeaderName; 17] {
-    [
+fn cors_layer_allow_header() -> CorsLayer {
+    CorsLayer::new()
+    .allow_headers([
         ACCEPT,
         HOST,
         CONTENT_TYPE,
@@ -153,15 +139,27 @@ fn allow_headers() -> [HeaderName; 17] {
         HeaderName::from_static("x-provider"),
         HeaderName::from_static("x-grpc-web"),
         HeaderName::from_static("x-user-agent"),
-    ]
+    ])
 }
 
+fn is_grpc_request<B>(req: &Request<B>) -> bool {
+    req.headers()
+        .get(CONTENT_TYPE)
+        .map(|content_type| {
+            info!(
+                "{}",
+                String::from_utf8(content_type.as_bytes().to_vec()).unwrap()
+            );
+            content_type.as_bytes()
+        })
+        .filter(|content_type| content_type.starts_with(b"application/grpc"))
+        .is_some()
+}
 
 pub fn xai_rest_layer() -> Stack<CorsLayer, Identity> {
     tower::ServiceBuilder::new()
         .layer(
-            CorsLayer::new()
-                .allow_headers(allow_headers())
+            cors_layer_allow_header()
                 .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
                     origin.is_empty()
                         || origin.as_bytes().ends_with(b"xambit.io")
@@ -177,8 +175,7 @@ pub fn xai_grpc_layer<F>(extractor: F) -> Stack<InterceptorLayer<F>,Stack<CorsLa
 {
     tower::ServiceBuilder::new()
         .layer(
-            CorsLayer::new()
-                .allow_headers(allow_headers())
+            cors_layer_allow_header()
                 .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
                     origin.is_empty()
                         || origin.as_bytes().ends_with(b"xambit.io")
