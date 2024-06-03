@@ -168,7 +168,7 @@ pub fn xai_rest_layer() -> Stack<CorsLayer, Identity> {
             cors_layer_allow_header()
                 .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
                     origin.is_empty()
-                        || origin.as_bytes().ends_with(b"xambit.io")
+                        || origin.as_bytes().ends_with(b".ablecredit.com")
                         || origin.as_bytes().starts_with(b"http://localhost")
                 }))
                 .allow_methods([
@@ -191,7 +191,7 @@ where
             cors_layer_allow_header()
                 .allow_origin(AllowOrigin::predicate(|origin: &HeaderValue, _: &Parts| {
                     origin.is_empty()
-                        || origin.as_bytes().ends_with(b"xambit.io")
+                        || origin.as_bytes().ends_with(b".ablecredit.com")
                         || origin.as_bytes().starts_with(b"http://localhost")
                 }))
                 .allow_methods([Method::POST]),
