@@ -6,7 +6,7 @@ use axum::{
 };
 use futures::{future::BoxFuture, ready};
 use http::{
-    header::{HeaderName, ACCEPT, CONTENT_TYPE, HOST},
+    header::{HeaderName, ACCEPT, AUTHORIZATION, CONTENT_TYPE, HOST},
     request::Parts,
     HeaderValue, Method,
 };
@@ -129,21 +129,22 @@ where
 fn cors_layer_allow_header() -> CorsLayer {
     CorsLayer::new().allow_headers([
         ACCEPT,
-        HOST,
+        AUTHORIZATION,
         CONTENT_TYPE,
-        HeaderName::from_static("x-c"),
-        HeaderName::from_static("x-u"),
+        HOST,
         HeaderName::from_static("x-a"),
+        HeaderName::from_static("x-c"),
         HeaderName::from_static("x-o"),
+        HeaderName::from_static("x-u"),
+        HeaderName::from_static("x-ua"),
+        HeaderName::from_static("x-app"),
+        HeaderName::from_static("x-key"),
         HeaderName::from_static("x-rsa"),
         HeaderName::from_static("x-auth"),
-        HeaderName::from_static("x-ua"),
         HeaderName::from_static("x-host"),
-        HeaderName::from_static("x-key"),
-        HeaderName::from_static("x-app"),
         HeaderName::from_static("x-rqid"),
-        HeaderName::from_static("x-provider"),
         HeaderName::from_static("x-grpc-web"),
+        HeaderName::from_static("x-provider"),
         HeaderName::from_static("x-user-agent"),
     ])
 }
